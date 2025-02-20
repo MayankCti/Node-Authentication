@@ -1,6 +1,6 @@
 import path from "path";
 import dotenv from "dotenv";
-import bcrypt from "bcryptjs";
+import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import { sendVerificationEmail } from "../config/mailer.js";
 import {
@@ -18,11 +18,10 @@ export const signup = async (req, res) => {
 
   try {
     const existingUser = await findUserByEmail(email);
-    console.log({ existingUser });
     if (existingUser)
       return res.status(400).json({ message: "Email already registered" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await argon2.hash(password);
     const token = jwt.sign({ email }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
@@ -85,7 +84,7 @@ export const login = async (req, res) => {
         .status(403)
         .json({ message: "Please verify your email first." });
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await argon2.verify(user.password, password);
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 

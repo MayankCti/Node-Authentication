@@ -2,7 +2,7 @@ import db from "../config/db.js";
 
 export const getAllUsers = () => {
   return new Promise((resolve, reject) => {
-    db.query("SELECT * FROM users", (err, results) => {
+    db.query("SELECT * FROM users ORDER BY createdAt DESC", (err, results) => {
       if (err) reject(err);
       resolve(results);
     });
@@ -11,9 +11,18 @@ export const getAllUsers = () => {
 
 export const getUserById = (id) => {
   return new Promise((resolve, reject) => {
+    db.query("SELECT * FROM users WHERE id = ?", [id], (err, result) => {
+      if (err) reject(err);
+      resolve(result[0]);
+    });
+  });
+};
+
+export const updateUserData = (user, name, profilePicture) => {
+  return new Promise((resolve, reject) => {
     db.query(
-      "SELECT * FROM users WHERE id = ? AND email = ?",
-      [id],
+      "UPDATE users SET name = ?, profile_picture = ? WHERE id = ?",
+      [name, profilePicture, user.id],
       (err, result) => {
         if (err) reject(err);
         resolve(result);
@@ -53,20 +62,7 @@ export const verifyUserEmail = (act_token, is_verified, id) => {
   });
 };
 
-export const updateUser = (id, userData) => {
-  return new Promise((resolve, reject) => {
-    db.query(
-      "UPDATE users SET ? WHERE id = ?",
-      [userData, id],
-      (err, result) => {
-        if (err) reject(err);
-        resolve(result);
-      }
-    );
-  });
-};
-
-export const deleteUser = (id) => {
+export const deleteUserById = (id) => {
   return new Promise((resolve, reject) => {
     db.query("DELETE FROM users WHERE id = ?", [id], (err, result) => {
       if (err) reject(err);
