@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const authenticateToken = (req, res, next) => {
+export const auth = (req, res, next) => {
   const token = req.header("Authorization");
   if (!token) return res.status(403).json({ error: "Access Denied" });
 

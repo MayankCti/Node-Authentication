@@ -7,6 +7,8 @@ import {
   getUserById,
   deleteUserById,
   updateUserData,
+  fetchUserPassword,
+  updatePassword,
 } from "../models/userModel.js";
 
 export const createNewUser = async (req, res) => {
@@ -67,7 +69,7 @@ export const getUser = async (req, res) => {
 // Update Profile
 export const updateUser = async (req, res) => {
   const { name } = req.body;
-  const profilePicture = req.file ? `/uploa0ds/${req.file.filename}` : null;
+  const profilePicture = req.file ? `/uploads/${req.file.filename}` : null;
 
   const user = await getUserById(req.user.id);
 
@@ -119,56 +121,53 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// Change Password
+// Change Password Function
 export const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
     const userId = req.user.id;
 
     if (!oldPassword || !newPassword) {
-      return res
-        .status(400)
-        .json({
-          error: "Both old and new passwords are required",
-          success: false,
-        });
+      return res.status(400).json({
+        message: "Both old and new passwords are required",
+        success: false,
+      });
     }
 
-    // Fetch user password
-    db.query(
-      "SELECT password FROM users WHERE id = ?",
-      [userId],
-      async (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+    // Fetch user's current password
+    const user = await fetchUserPassword(userId);
+    if (!user || !user.password) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
 
-        if (rows.length === 0) {
-          return res.status(404).json({ error: "User not found" });
-        }
+    // Verify old password
+    const isMatch = await argon2.verify(user.password, oldPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect old password", success: false });
+    }
 
-        const storedPassword = rows[0].password;
+    // Hash the new password
+    const hashedNewPassword = await argon2.hash(newPassword);
 
-        // Verify old password
-        const isMatch = await argon2.verify(storedPassword, oldPassword);
-        if (!isMatch) {
-          return res.status(400).json({ error: "Incorrect old password" });
-        }
+    // Update password in database
+    const response = await updatePassword(hashedNewPassword, newPassword,userId);
 
-        // Hash new password
-        const hashedNewPassword = await argon2.hash(newPassword);
-
-        // Update password in database
-        db.query(
-          "UPDATE users SET password = ? WHERE id = ?",
-          [hashedNewPassword, userId],
-          (err) => {
-            if (err) return res.status(500).json({ error: err.message });
-
-            res.json({ message: "Password changed successfully" });
-          }
-        );
-      }
-    );
+    if (response?.affectedRows > 0) {
+      return res.json({
+        message: "Password changed successfully",
+        success: true,
+      });
+    } else {
+      return res.status(500).json({
+        message: "Unable to change password",
+        success: false,
+      });
+    }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error changing password:", error);
+    res.status(500).json({ message: "Internal server error", success: false });
   }
 };

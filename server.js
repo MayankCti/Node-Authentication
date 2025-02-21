@@ -5,6 +5,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import userRoutes from "./routes/userRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(bodyParser.json());
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/category", categoryRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

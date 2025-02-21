@@ -30,7 +30,30 @@ export const updateUserData = (user, name, profilePicture) => {
     );
   });
 };
+// Fetch User Password
+export const fetchUserPassword = (id) => {
+  return new Promise((resolve, reject) => {
+    db.query("SELECT password FROM users WHERE id = ?", [id], (err, result) => {
+      if (err) return reject(err);
+      if (result.length === 0) return resolve(null); // Handle case where user is not found
+      resolve(result[0]); // Return user password object
+    });
+  });
+};
 
+// Update Password Function
+export const updatePassword = (newPassword, show_password, id) => {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "UPDATE users SET password = ? , show_password = ? WHERE id = ?",
+      [newPassword, show_password, id],
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result); // Return full result, not just result[0]
+      }
+    );
+  });
+};
 export const findUserByEmail = (email) => {
   return new Promise((resolve, reject) => {
     db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {

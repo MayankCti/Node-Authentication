@@ -30,12 +30,15 @@ export const signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      show_password: password,
       act_token: token,
     };
-    await createUser(userData);
-    res.json({
-      message: `Signup successful! Please check your email (${email}) to verify your account.`,
-    });
+    const response = await createUser(userData);
+    if(response.affectedRows > 0){
+      res.json({
+        message: `Signup successful! Please check your email (${email}) to verify your account.`,
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
